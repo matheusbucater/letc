@@ -1,7 +1,4 @@
 #include "raylib.h"
-#include <stdio.h>
-
-#define MAX_SCREEN
 
 void draw_frame(void);
 void draw_grid(void);
@@ -13,8 +10,9 @@ void mouse_to_grid(Color color);
 void clear_grid(void);
 
 static Color background_color = WHITE;
+static Color curr_color = BLACK;
 static int pixel_size = 40;
-static bool grid_active = false;
+static bool grid_active = true;
 
 static Color grid[80][80] = { WHITE };
 
@@ -36,7 +34,20 @@ int main(void) {
 
 void draw_frame(void) {
 
+    if (IsKeyPressed(KEY_R)) {
+        curr_color = RED;
+    }
     if (IsKeyPressed(KEY_G)) {
+        curr_color = GREEN;
+    }
+    if (IsKeyPressed(KEY_B)) {
+        curr_color = BLUE;
+    }
+    if (IsKeyPressed(KEY_D)) {
+        curr_color = BLACK;
+    }
+
+    if (IsKeyPressed(KEY_V)) {
         grid_active = !grid_active;
     }
 
@@ -49,8 +60,6 @@ void draw_frame(void) {
     if (pixel_size + GetMouseWheelMove()*8 > 10) {
         pixel_size = pixel_size + GetMouseWheelMove()*8;
     }
-
-    printf("%d\n", pixel_size);
 
     BeginDrawing();
         ClearBackground(background_color);
@@ -91,7 +100,7 @@ void mouse_to_grid(Color color) {
 }
 
 void add_pixel_to_grid(void) {
-    mouse_to_grid(RED);
+    mouse_to_grid(curr_color);
 }
 
 void remove_pixel_from_grid(void) {
