@@ -1,4 +1,7 @@
 #include "raylib.h"
+#include <stdio.h>
+
+#define MAX_SCREEN
 
 void draw_frame(void);
 void draw_grid(void);
@@ -10,7 +13,7 @@ static Color background_color = WHITE;
 static int pixel_size = 40;
 static bool grid_active = false;
 
-static Color grid[20][20] = { WHITE };
+static Color grid[80][80] = { WHITE };
 
 int main(void) {
     
@@ -38,7 +41,11 @@ void draw_frame(void) {
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) add_pixel_to_grid();
 
-    pixel_size = pixel_size + GetMouseWheelMove()*8;
+    if (pixel_size + GetMouseWheelMove()*8 > 10) {
+        pixel_size = pixel_size + GetMouseWheelMove()*8;
+    }
+
+    printf("%d\n", pixel_size);
 
     BeginDrawing();
         ClearBackground(background_color);
@@ -74,17 +81,14 @@ void add_pixel_to_grid(void) {
     float screen_width, screen_height;
     Vector2 mouse_pos, pixel_pos;
 
-    screen_width = GetScreenWidth();
-    screen_height = GetScreenHeight();
-
     mouse_pos = GetMousePosition();
     pixel_pos = (Vector2){mouse_pos.x / pixel_size, mouse_pos.y / pixel_size};
     grid[(int)pixel_pos.x][(int)pixel_pos.y] = RED;
 }
 
 void draw_pixels(void) {
-    for (int x = 0; x < 20; x++) {
-        for (int y = 0; y < 20; y++) {
+    for (int x = 0; x < 80; x++) {
+        for (int y = 0; y < 80; y++) {
             Color pixel_color = grid[x][y];
             if (ColorToInt(pixel_color) != ColorToInt(background_color)) {
                 Vector2 pixel_position = (Vector2){x * pixel_size, y * pixel_size};
