@@ -1,5 +1,11 @@
 #include "raylib.h"
 
+#define LIGHT_BG_COLOR WHITE
+#define DARK_BG_COLOR BLACK
+
+#define LIGHT_PRIMARY_COLOR BLACK
+#define DARK_PRIMARY_COLOR WHITE
+
 void draw_frame(void);
 void draw_grid(void);
 void draw_pixels(void);
@@ -8,13 +14,15 @@ void add_pixel_to_grid(void);
 void remove_pixel_from_grid(void);
 void mouse_to_grid(Color color);
 void clear_grid(void);
+void change_grid_theme(void);
 
-static Color background_color = WHITE;
-static Color curr_color = BLACK;
+static bool dark_mode = false;
+static Color background_color = LIGHT_BG_COLOR;
+static Color curr_color = LIGHT_PRIMARY_COLOR;
 static int pixel_size = 40;
 static bool grid_active = true;
 
-static Color grid[80][80] = { WHITE };
+static Color grid[80][80] = { LIGHT_BG_COLOR };
 
 int main(void) {
     
@@ -33,6 +41,21 @@ int main(void) {
 }
 
 void draw_frame(void) {
+
+    if (IsKeyPressed(KEY_I)) {
+        dark_mode = !dark_mode;
+        change_grid_theme();
+    }
+
+    if (dark_mode) {
+       background_color = DARK_BG_COLOR;
+       if (ColorToInt(curr_color) == ColorToInt(LIGHT_PRIMARY_COLOR)) curr_color = DARK_PRIMARY_COLOR;
+    }
+
+    if (!dark_mode) {
+        background_color = LIGHT_BG_COLOR;
+        if (ColorToInt(curr_color) == ColorToInt(DARK_PRIMARY_COLOR)) curr_color = LIGHT_PRIMARY_COLOR;
+    }
 
     if (IsKeyPressed(KEY_R)) {
         curr_color = RED;
@@ -111,10 +134,8 @@ void draw_pixels(void) {
     for (int x = 0; x < 80; x++) {
         for (int y = 0; y < 80; y++) {
             Color pixel_color = grid[x][y];
-            if (ColorToInt(pixel_color) != ColorToInt(background_color)) {
-                Vector2 pixel_position = (Vector2){x * pixel_size, y * pixel_size};
-                DrawRectangleV(pixel_position, (Vector2){pixel_size, pixel_size}, pixel_color);
-            }
+            Vector2 pixel_position = (Vector2){x * pixel_size, y * pixel_size};
+            DrawRectangleV(pixel_position, (Vector2){pixel_size, pixel_size}, pixel_color);
         }
     }
 }
@@ -123,6 +144,19 @@ void clear_grid(void) {
     for (int x = 0; x < 80; x++) {
         for (int y = 0; y < 80; y++) {
             grid[x][y] = background_color;
+        }
+    }
+}
+
+void change_grid_theme(void) {
+    for (int x = 0; x < 80; x++) {
+        for (int y = 0; y < 80; y ++) {
+            Color pixel_color = grid[x][y];
+
+            if (ColorToInt(pixel_color) == ColorToInt(LIGHT_PRIMARY_COLOR)) grid[x][y] = DARK_PRIMARY_COLOR;
+            if (ColorToInt(pixel_color) == ColorToInt(DARK_PRIMARY_COLOR)) grid[x][y] = LIGHT_PRIMARY_COLOR;
+            if (ColorToInt(pixel_color) == ColorToInt(LIGHT_BG_COLOR)) grid[x][y] = DARK_BG_COLOR;
+            if (ColorToInt(pixel_color) == ColorToInt(DARK_BG_COLOR)) grid[x][y] = LIGHT_BG_COLOR;
         }
     }
 }
