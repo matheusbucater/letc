@@ -8,6 +8,8 @@ void draw_grid(void);
 void draw_pixels(void);
 
 void add_pixel_to_grid(void);
+void remove_pixel_from_grid(void);
+void mouse_to_grid(Color color);
 
 static Color background_color = WHITE;
 static int pixel_size = 40;
@@ -40,6 +42,8 @@ void draw_frame(void) {
     if (IsKeyPressed(KEY_C)) ClearBackground(background_color);
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) add_pixel_to_grid();
+
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) remove_pixel_from_grid();
 
     if (pixel_size + GetMouseWheelMove()*8 > 10) {
         pixel_size = pixel_size + GetMouseWheelMove()*8;
@@ -76,14 +80,21 @@ void draw_grid(void) {
     }
 }
 
-void add_pixel_to_grid(void) {
-
-    float screen_width, screen_height;
+void mouse_to_grid(Color color) {
     Vector2 mouse_pos, pixel_pos;
 
     mouse_pos = GetMousePosition();
     pixel_pos = (Vector2){mouse_pos.x / pixel_size, mouse_pos.y / pixel_size};
-    grid[(int)pixel_pos.x][(int)pixel_pos.y] = RED;
+    grid[(int)pixel_pos.x][(int)pixel_pos.y] = color;
+    
+}
+
+void add_pixel_to_grid(void) {
+    mouse_to_grid(RED);
+}
+
+void remove_pixel_from_grid(void) {
+    mouse_to_grid(background_color);
 }
 
 void draw_pixels(void) {
