@@ -10,6 +10,7 @@ void draw_pixels(void);
 void add_pixel_to_grid(void);
 void remove_pixel_from_grid(void);
 void mouse_to_grid(Color color);
+void clear_grid(void);
 
 static Color background_color = WHITE;
 static int pixel_size = 40;
@@ -39,7 +40,7 @@ void draw_frame(void) {
         grid_active = !grid_active;
     }
 
-    if (IsKeyPressed(KEY_C)) ClearBackground(background_color);
+    if (IsKeyPressed(KEY_C)) clear_grid();
 
     if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) add_pixel_to_grid();
 
@@ -105,6 +106,14 @@ void draw_pixels(void) {
                 Vector2 pixel_position = (Vector2){x * pixel_size, y * pixel_size};
                 DrawRectangleV(pixel_position, (Vector2){pixel_size, pixel_size}, pixel_color);
             }
+        }
+    }
+}
+
+void clear_grid(void) {
+    for (int x = 0; x < 80; x++) {
+        for (int y = 0; y < 80; y++) {
+            grid[x][y] = background_color;
         }
     }
 }
