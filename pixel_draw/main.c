@@ -1,10 +1,16 @@
-#include "raylib.h"
+#include <raylib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 
 #define LIGHT_BG_COLOR WHITE
 #define DARK_BG_COLOR BLACK
 
 #define LIGHT_PRIMARY_COLOR BLACK
 #define DARK_PRIMARY_COLOR WHITE
+
+int get_largest_string_index(const char *strings[], int length);
+void screenshot(void);
 
 void draw_frame(void);
 void draw_grid(void);
@@ -16,11 +22,21 @@ void mouse_to_grid(Color color);
 void clear_grid(void);
 void change_grid_theme(void);
 
+void draw_help_message(void);
+void draw_help_menu(void);
+void draw_screenshot_message(void);
+
 static bool dark_mode = false;
 static Color background_color = LIGHT_BG_COLOR;
 static Color curr_color = LIGHT_PRIMARY_COLOR;
 static int pixel_size = 40;
 static bool grid_active = true;
+static bool help_message_active = true;
+static bool help_menu_active = false;
+static bool screenshot_active = false;
+static bool screenshot_taken = false;
+
+static double screenshot_timer = 0;
 
 static Color grid[80][80] = { LIGHT_BG_COLOR };
 
@@ -42,7 +58,22 @@ int main(void) {
 
 void draw_frame(void) {
 
-    if (IsKeyPressed(KEY_I)) {
+    if (IsKeyPressed(KEY_H)) {
+        help_menu_active = !help_menu_active;
+        help_message_active = !help_message_active;
+    }
+
+    if (IsKeyPressed(KEY_Q)) {
+        CloseWindow();
+    }
+
+    if (IsKeyPressed(KEY_S)) {
+        screenshot_active = true;
+        help_menu_active = false;
+        help_message_active = false;
+    }
+
+    if (IsKeyPressed(KEY_SPACE)) {
         dark_mode = !dark_mode;
         change_grid_theme();
     }
@@ -55,6 +86,16 @@ void draw_frame(void) {
     if (!dark_mode) {
         background_color = LIGHT_BG_COLOR;
         if (ColorToInt(curr_color) == ColorToInt(DARK_PRIMARY_COLOR)) curr_color = LIGHT_PRIMARY_COLOR;
+    }
+    
+    if (screenshot_active) {
+        screenshot_timer += GetFrameTime();
+        if (screenshot_timer > 3) {
+            screenshot_active = false;
+            screenshot_taken = false;
+            help_message_active = true;
+            screenshot_timer = 0;
+        }
     }
 
     if (IsKeyPressed(KEY_R)) {
@@ -88,6 +129,12 @@ void draw_frame(void) {
         ClearBackground(background_color);
         draw_pixels();
         if (grid_active) draw_grid();
+        if (help_message_active) draw_help_message();
+        if (help_menu_active) draw_help_menu();
+        if (screenshot_active) {
+            screenshot();
+            draw_screenshot_message();
+        }
     EndDrawing();
 }
 
@@ -110,6 +157,71 @@ void draw_grid(void) {
             DrawLineV(hline_start, hline_end, LIGHTGRAY);
             DrawLineV(vline_start, vline_end, LIGHTGRAY);
         }
+    }
+}
+
+void screenshot(void) {
+    if (!screenshot_taken) {
+        time_t timer;
+        char buffer[26];
+        struct tm* tm_info;
+
+        timer = time(NULL);
+        tm_info = localtime(&timer);
+
+        strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
+        const char *file_basename = "pixel_draw_";
+        const char *file_extension = ".png";
+        char screenshot_name[100];
+        strcpy(screenshot_name, file_basename);
+        strcat(screenshot_name, buffer);
+        strcat(screenshot_name, file_extension);
+
+        TakeScreenshot(screenshot_name);
+        screenshot_taken = true;
+    }
+}
+
+void draw_screenshot_message(void) {
+    char *screenshot_message = "screenshot taken";
+    const int font_size = 20;
+    const int x = 400 - MeasureText(screenshot_message, font_size) / 2;
+    const int y = 400 - font_size / 2;
+    const int rec_padding = 5;
+    DrawRectangle(x - rec_padding, y - rec_padding, MeasureText(screenshot_message, font_size) + rec_padding * 2, font_size + rec_padding * 2, dark_mode ? DARK_BG_COLOR : LIGHT_BG_COLOR);
+    DrawText(screenshot_message, x, y, font_size, dark_mode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR);
+}
+
+void draw_help_message(void) {
+    const char *help_message = "h for help";
+    const int font_size = 20;
+    const int x = 15;
+    const int y = 770;
+    const int rec_padding = 5;
+    DrawRectangle(x - rec_padding, y - rec_padding, MeasureText(help_message, font_size) + rec_padding * 2, font_size + rec_padding * 2, dark_mode ? DARK_BG_COLOR : LIGHT_BG_COLOR);
+    DrawText("h for help", x, y, font_size, dark_mode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR);
+}
+
+void draw_help_menu(void) {
+    const int menu_options = 13;
+    const char *help_menu[13] = {"[left mouse] draw", "[right mouse] erase",
+                                "[scroll wheel] zoom in/out",
+                                "[r] red", "[g] green", "[b] blue", "[d] default (black/white)",
+                                "[s] screenshot", "[c] clear", "[v] toggle grid", "[space] dark/light mode",
+                                "[h] toggle help", "[q] quit"};
+
+    const int index = get_largest_string_index(help_menu, menu_options);
+    const char* largest_string = help_menu[index];
+    const int font_size = 20;
+    const int x = 15;
+    const int y = 15;
+    const int rec_padding = 5;
+
+    DrawRectangle(x - rec_padding, y - rec_padding, MeasureText(largest_string, font_size) + rec_padding * 2, font_size * menu_options * 2 + rec_padding * 2, dark_mode ? DARK_BG_COLOR : LIGHT_BG_COLOR);
+
+    for (int i = 0; i < menu_options; i++) {
+        DrawText(help_menu[i], x, y + font_size * i * 2, font_size, dark_mode ? DARK_PRIMARY_COLOR : LIGHT_PRIMARY_COLOR);
     }
 }
 
@@ -159,4 +271,18 @@ void change_grid_theme(void) {
             if (ColorToInt(pixel_color) == ColorToInt(DARK_BG_COLOR)) grid[x][y] = LIGHT_BG_COLOR;
         }
     }
+}
+
+int get_largest_string_index(const char *strings[], int length) {
+    int largest_index = 0;
+    int largest_length = 0;
+
+    for (int i = 0; i < length; i++) {
+        if (strlen(strings[i]) > largest_length) {
+            largest_length = strlen(strings[i]);
+            largest_index = i;
+        }
+    }
+
+    return largest_index;
 }
