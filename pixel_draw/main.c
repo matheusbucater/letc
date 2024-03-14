@@ -34,7 +34,6 @@ static bool grid_active = true;
 static bool help_message_active = true;
 static bool help_menu_active = false;
 static bool screenshot_active = false;
-static bool screenshot_taken = false;
 
 static double screenshot_timer = 0;
 
@@ -57,9 +56,11 @@ int main(void) {
 }
 
 void draw_frame(void) {
-
     if (IsKeyPressed(KEY_H)) {
         help_menu_active = !help_menu_active;
+    }
+
+    if (IsKeyPressed(KEY_M)) {
         help_message_active = !help_message_active;
     }
 
@@ -89,10 +90,12 @@ void draw_frame(void) {
     }
     
     if (screenshot_active) {
+        if (screenshot_timer == 0 && !help_menu_active && !help_message_active) {
+            screenshot();
+        }
         screenshot_timer += GetFrameTime();
         if (screenshot_timer > 3) {
             screenshot_active = false;
-            screenshot_taken = false;
             help_message_active = true;
             screenshot_timer = 0;
         }
@@ -131,11 +134,9 @@ void draw_frame(void) {
         if (grid_active) draw_grid();
         if (help_message_active) draw_help_message();
         if (help_menu_active) draw_help_menu();
-        if (screenshot_active) {
-            screenshot();
-            draw_screenshot_message();
-        }
+        if (screenshot_active) draw_screenshot_message();
     EndDrawing();
+
 }
 
 void draw_grid(void) {
@@ -161,26 +162,23 @@ void draw_grid(void) {
 }
 
 void screenshot(void) {
-    if (!screenshot_taken) {
-        time_t timer;
-        char buffer[26];
-        struct tm* tm_info;
+    time_t timer;
+    char buffer[26];
+    struct tm* tm_info;
 
-        timer = time(NULL);
-        tm_info = localtime(&timer);
+    timer = time(NULL);
+    tm_info = localtime(&timer);
 
-        strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+    strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
 
-        const char *file_basename = "pixel_draw_";
-        const char *file_extension = ".png";
-        char screenshot_name[100];
-        strcpy(screenshot_name, file_basename);
-        strcat(screenshot_name, buffer);
-        strcat(screenshot_name, file_extension);
+    const char *file_basename = "pixel_draw_";
+    const char *file_extension = ".png";
+    char screenshot_name[100];
+    strcpy(screenshot_name, file_basename);
+    strcat(screenshot_name, buffer);
+    strcat(screenshot_name, file_extension);
 
-        TakeScreenshot(screenshot_name);
-        screenshot_taken = true;
-    }
+    TakeScreenshot(screenshot_name);
 }
 
 void draw_screenshot_message(void) {
@@ -204,12 +202,13 @@ void draw_help_message(void) {
 }
 
 void draw_help_menu(void) {
-    const int menu_options = 13;
-    const char *help_menu[13] = {"[left mouse] draw", "[right mouse] erase",
+    const int menu_options = 14;
+    const char *help_menu[14] = {"[left mouse] draw", "[right mouse] erase",
                                 "[scroll wheel] zoom in/out",
                                 "[r] red", "[g] green", "[b] blue", "[d] default (black/white)",
                                 "[s] screenshot", "[c] clear", "[v] toggle grid", "[space] dark/light mode",
-                                "[h] toggle help", "[q] quit"};
+                                "[h] toggle menu", "[m] toggle help message",
+                                "[q] quit"};
 
     const int index = get_largest_string_index(help_menu, menu_options);
     const char* largest_string = help_menu[index];
